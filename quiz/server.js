@@ -22,14 +22,27 @@ const addMsgToRequest = function (req, res, next) {
         error: {message: 'users not found', status: 404}
     });
   }
-  
 }
 
-app.use(
-  cors({origin: 'http://localhost:3000'})
-);
-app.use('/read/usernames', addMsgToRequest);
+app.use(cors({origin: 'http://localhost:3000'}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Middleware to add users data to the request object
+app.use(addMsgToRequest);
+
+// Route to search for users by username and see their email
+app.get('/read/username/:name', (req, res) => {
+  const username = req.params.name;
+  const user = req.users.find(user => user.username === username);
+  if (user) {
+    res.json({ email: user.email });
+  } else {
+    res.status(404).json({ error: 'User not found' });
+  }
+});
+
+// Route to get usernames
 app.get('/read/usernames', (req, res) => {
   let usernames = req.users.map(function(user) {
     return {id: user.id, username: user.username};
@@ -37,10 +50,7 @@ app.get('/read/usernames', (req, res) => {
   res.send(usernames);
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/write/adduser', addMsgToRequest);
-
+// Route to add a new user
 app.post('/write/adduser', (req, res) => {
   let newuser = req.body;
   req.users.push(newuser);
